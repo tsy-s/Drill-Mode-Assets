@@ -39,6 +39,14 @@ const SIMPLE_ICONS: Array<[name: string, Component: IconComponent, size: number,
   ["Trophy", Icons.IconTrophy, 24, "#ffe66d"],
   ["Warning", Icons.IconWarning, 16, "#ff6b35"],
   ["X", Icons.IconX, 16, "#ff2d55"],
+  // Drawn for the website (drill-mode-site); not in the app.
+  ["Chevron", Icons.IconChevron, 16, "#4ecdc4"],
+  ["GitHub", Icons.IconGitHub, 20, "#e8f4f8"],
+  ["Globe", Icons.IconGlobe, 20, "#4ecdc4"],
+  ["Instagram", Icons.IconInstagram, 20, "#ff71c5"],
+  ["LinkedIn", Icons.IconLinkedIn, 20, "#4ecdc4"],
+  ["Menu", Icons.IconMenu, 20, "#e8f4f8"],
+  ["Play", Icons.IconPlay, 16, "#00ff88"],
 ];
 
 const sizeControl = { kind: "size", key: "size", min: 8, max: 512 } as const;
@@ -78,6 +86,24 @@ const special: AssetDef[] = [
     controls: [sizeControl, { kind: "color", key: "color", label: "COLOUR" }, { kind: "toggle", key: "muted", label: "MUTED" }],
     render: (p) => <Icons.IconSpeaker size={p.size} color={p.color} muted={p.muted} />,
     filename: (p) => slug("icon-speaker", p.muted ? "off" : "on", p.size, p.color),
+  }),
+  asset({
+    id: "icon-arrow",
+    name: "Arrow",
+    defaults: { size: 16, color: "#00ff88", direction: "right" },
+    controls: [
+      sizeControl,
+      { kind: "color", key: "color", label: "COLOUR" },
+      {
+        kind: "choice", key: "direction", label: "DIRECTION",
+        options: [
+          { value: "right", label: "RIGHT" }, { value: "down", label: "DOWN" },
+          { value: "left", label: "LEFT" }, { value: "up", label: "UP" },
+        ],
+      },
+    ],
+    render: (p) => <Icons.IconArrow size={p.size} color={p.color} direction={p.direction as "right" | "down" | "left" | "up"} />,
+    filename: (p) => slug("icon-arrow", p.direction, p.size, p.color),
   }),
   asset({
     id: "icon-tree",

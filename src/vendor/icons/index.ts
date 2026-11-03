@@ -42,3 +42,13 @@ export { IconX } from "./IconX";
 
 
 
+
+// Drawn for the Drill Mode website (drill-mode-site/src/components/icons/), not in the app.
+export { IconArrow } from "./IconArrow";
+export { IconChevron } from "./IconChevron";
+export { IconGitHub } from "./IconGitHub";
+export { IconGlobe } from "./IconGlobe";
+export { IconInstagram } from "./IconInstagram";
+export { IconLinkedIn } from "./IconLinkedIn";
+export { IconMenu } from "./IconMenu";
+export { IconPlay } from "./IconPlay";
