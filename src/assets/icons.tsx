@@ -39,14 +39,16 @@ const SIMPLE_ICONS: Array<[name: string, Component: IconComponent, size: number,
   ["Trophy", Icons.IconTrophy, 24, "#ffe66d"],
   ["Warning", Icons.IconWarning, 16, "#ff6b35"],
   ["X", Icons.IconX, 16, "#ff2d55"],
-  // Drawn for the website (drill-mode-site); not in the app.
+  // Drawn for the website (drill-mode-site). Chevron, Sun and Moon are in the app too.
   ["Chevron", Icons.IconChevron, 16, "#4ecdc4"],
   ["GitHub", Icons.IconGitHub, 20, "#e8f4f8"],
   ["Globe", Icons.IconGlobe, 20, "#4ecdc4"],
   ["Instagram", Icons.IconInstagram, 20, "#ff71c5"],
   ["LinkedIn", Icons.IconLinkedIn, 20, "#4ecdc4"],
   ["Menu", Icons.IconMenu, 20, "#e8f4f8"],
+  ["Moon", Icons.IconMoon, 16, "#c77dff"],
   ["Play", Icons.IconPlay, 16, "#00ff88"],
+  ["Sun", Icons.IconSun, 16, "#ffe66d"],
 ];
 
 const sizeControl = { kind: "size", key: "size", min: 8, max: 512 } as const;

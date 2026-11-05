@@ -49,7 +49,7 @@ Hair, outfits and accessories use the same scale as a full character: 1 art pixe
 | `vendor/avatars/character/` | `huawei-2026/src/app/components/avatars/character/` (identical to `assets-svg-export/character/`) |
 | `vendor/avatars/*.tsx`, `characters/` | `huawei-2026/src/app/components/avatars/` |
 | `vendor/avatars/PixiLegacy.tsx` | `9-22/assets/avatars/PixiAvatar.tsx`, listed as **Fake Pixi**. The real Pixi is `PixelMascot`. |
-| `vendor/icons/` | `huawei-2026/src/app/components/icons/`, plus 8 icons drawn for the website (Arrow, Chevron, GitHub, Globe, Instagram, LinkedIn, Menu, Play) from `drill-mode-site/src/components/icons/` |
+| `vendor/icons/` | `huawei-2026/src/app/components/icons/`, plus 10 icons drawn for the website (Arrow, Chevron, GitHub, Globe, Instagram, LinkedIn, Menu, Moon, Play, Sun) from `drill-mode-site/src/components/icons/`. Chevron, Sun and Moon are used by the app too |
 | `vendor/furniture/` | `FurnitureIcon.tsx`, `archive/`, and `public/furniture/*.svg` (shop art) |
 | `vendor/ui/` | `PixelButton.tsx`, `ToggleSwitch.tsx`, used by this app's own interface |
 
