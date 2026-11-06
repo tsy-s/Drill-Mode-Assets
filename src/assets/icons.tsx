@@ -76,6 +76,8 @@ const special: AssetDef[] = [
   asset({
     id: "icon-medal",
     name: "Medal",
+    // Always outlined in light (px-edge in the app), whatever the rank colour.
+    edge: true,
     defaults: { size: 20, color: "#ffe66d" },
     controls: [sizeControl, { kind: "color", key: "color", label: "COLOUR", presets: MEDAL_COLORS }],
     render: (p) => <Icons.IconMedal size={p.size} color={p.color} />,
@@ -117,4 +119,7 @@ const special: AssetDef[] = [
   }),
 ];
 
-export const ICON_ASSETS: AssetDef[] = [...simple, ...special].sort((a, b) => a.name.localeCompare(b.name));
+// In the light theme every icon is drawn the app's way: neon with a dark outline.
+export const ICON_ASSETS: AssetDef[] = [...simple, ...special]
+  .map((a): AssetDef => ({ ...a, light: "icon" }))
+  .sort((a, b) => a.name.localeCompare(b.name));

@@ -2,6 +2,7 @@ import { IconShield } from "../vendor/icons";
 import { asset, type AssetDef, type ChoiceOption } from "../lib/types";
 import { slug } from "../lib/svg";
 import { FONT_IMPORT, MONO, PIXEL, textWidth } from "../lib/text";
+import { LIGHT, lineColor, surfaceColor, textColor, type Theme } from "../lib/theme";
 
 // The app's UI widgets are HTML + CSS. These redraw them as native SVG using the same
 // measurements and colours (components/ui, components/layout) so exports stay editable.
@@ -14,6 +15,23 @@ export function FontDefs() {
 const mid = (y: number, fontSize: number) => y + fontSize * 0.35;
 const csv = (s: string) => s.split(",").map((t) => t.trim()).filter(Boolean);
 
+/**
+ * Colour roles, as in the app: in the light theme surfaces swap to the light palette, neon
+ * fills stay neon, neon text uses the darker ink, borders use the line shade, and the dark
+ * outlines and pixel shadows stay dark. In the dark theme every colour is unchanged.
+ */
+function roles(theme: Theme = "dark") {
+  const light = theme === "light";
+  return {
+    light,
+    surface: (c: string) => surfaceColor(theme, c),
+    text: (c: string) => textColor(theme, c),
+    line: (c: string) => lineColor(theme, c),
+    outline: light ? LIGHT.outline : "#0a0e1a",
+    onFill: "#0a0e1a",
+  };
+}
+
 // ── PixelButton ────────────────────────────────────────────────────────────
 
 const BUTTON_SIZES = {
@@ -22,9 +40,10 @@ const BUTTON_SIZES = {
   lg: { padX: 24, padY: 16, font: 18 },
 } as const;
 
-export function SvgPixelButton({ label, color, textColor, size, state, width = 0 }: {
-  label: string; color: string; textColor: string; size: keyof typeof BUTTON_SIZES; state: "normal" | "pressed" | "disabled"; width?: number;
+export function SvgPixelButton({ label, color, textColor, size, state, width = 0, theme }: {
+  label: string; color: string; textColor: string; size: keyof typeof BUTTON_SIZES; state: "normal" | "pressed" | "disabled"; width?: number; theme?: Theme;
 }) {
+  const c = roles(theme);
   const s = BUTTON_SIZES[size];
   const w = width > 0 ? width : Math.ceil(textWidth(label, MONO, s.font) + s.padX * 2 + 8);
   const h = Math.max(44, Math.round(s.font * 1.5 + s.padY * 2 + 8));
@@ -33,11 +52,11 @@ export function SvgPixelButton({ label, color, textColor, size, state, width = 0
   return (
     <svg width={w + 4} height={h + 4} viewBox={`0 0 ${w + 4} ${h + 4}`} shapeRendering="crispEdges">
       <FontDefs />
-      {!pressed && !disabled && <rect x={4} y={4} width={w} height={h} fill="#0a0e1a" />}
+      {!pressed && !disabled && <rect x={4} y={4} width={w} height={h} fill={c.outline} />}
       <g transform={pressed ? "translate(4 4)" : undefined}>
-        <rect width={w} height={h} fill={disabled ? "#1a2340" : "#0a0e1a"} />
-        <rect x={4} y={4} width={w - 8} height={h - 8} fill={disabled ? "#2a3a5c" : color} />
-        <text x={w / 2} y={mid(h / 2, s.font)} textAnchor="middle" fontFamily={MONO} fontSize={s.font} fill={disabled ? "#6b8ba4" : textColor}>{label}</text>
+        <rect width={w} height={h} fill={disabled ? c.surface("#1a2340") : c.outline} />
+        <rect x={4} y={4} width={w - 8} height={h - 8} fill={disabled ? c.surface("#2a3a5c") : color} />
+        <text x={w / 2} y={mid(h / 2, s.font)} textAnchor="middle" fontFamily={MONO} fontSize={s.font} fill={disabled ? c.text("#6b8ba4") : textColor}>{label}</text>
       </g>
     </svg>
   );
@@ -45,78 +64,85 @@ export function SvgPixelButton({ label, color, textColor, size, state, width = 0
 
 // ── PixelPanel / Section ───────────────────────────────────────────────────
 
-function SvgPanel({ width, height, accent, title, titleColor, body }: {
-  width: number; height: number; accent: string; title: string; titleColor: string; body: string;
+function SvgPanel({ width, height, accent, title, titleColor, body, theme }: {
+  width: number; height: number; accent: string; title: string; titleColor: string; body: string; theme?: Theme;
 }) {
+  const c = roles(theme);
   const lines = body.split("\n").filter((l) => l.trim());
   return (
     <svg width={width + 4} height={height + 4} viewBox={`0 0 ${width + 4} ${height + 4}`} shapeRendering="crispEdges">
       <FontDefs />
-      <rect x={4} y={4} width={width} height={height} fill={accent} />
-      <rect width={width} height={height} fill={accent} />
-      <rect x={4} y={4} width={width - 8} height={height - 8} fill="#111827" />
-      {title && <text x={20} y={20 + 18 * 0.8} fontFamily={MONO} fontSize={18} fill={titleColor}>{title}</text>}
+      <rect x={4} y={4} width={width} height={height} fill={c.line(accent)} />
+      <rect width={width} height={height} fill={c.line(accent)} />
+      <rect x={4} y={4} width={width - 8} height={height - 8} fill={c.surface("#111827")} />
+      {title && <text x={20} y={20 + 18 * 0.8} fontFamily={MONO} fontSize={18} fill={c.text(titleColor)}>{title}</text>}
       {lines.map((line, i) => (
-        <text key={i} x={20} y={(title ? 52 : 20) + 14 * 0.8 + i * 21} fontFamily={MONO} fontSize={14} fill="#9bb0c8">{line}</text>
+        <text key={i} x={20} y={(title ? 52 : 20) + 14 * 0.8 + i * 21} fontFamily={MONO} fontSize={14} fill={c.text("#9bb0c8")}>{line}</text>
       ))}
     </svg>
   );
 }
 
-function SvgSection({ width, height, title, note, accent }: { width: number; height: number; title: string; note: string; accent: string }) {
+function SvgSection({ width, height, title, note, accent, theme }: { width: number; height: number; title: string; note: string; accent: string; theme?: Theme }) {
+  const c = roles(theme);
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} shapeRendering="crispEdges">
       <FontDefs />
-      <rect width={width} height={height} fill="#2a3a5c" />
-      <rect x={3} y={3} width={width - 6} height={height - 6} fill="#111827" />
-      <text x={15} y={15 + 18 * 0.8} fontFamily={MONO} fontSize={18} fill={accent} letterSpacing={1}>{title}</text>
-      {note && <text x={15} y={45 + 9} fontFamily={MONO} fontSize={9} fill="#6b8ba4">{note}</text>}
+      <rect width={width} height={height} fill={c.line("#2a3a5c")} />
+      <rect x={3} y={3} width={width - 6} height={height - 6} fill={c.surface("#111827")} />
+      <text x={15} y={15 + 18 * 0.8} fontFamily={MONO} fontSize={18} fill={c.text(accent)} letterSpacing={1}>{title}</text>
+      {note && <text x={15} y={45 + 9} fontFamily={MONO} fontSize={9} fill={c.text("#6b8ba4")}>{note}</text>}
     </svg>
   );
 }
 
 // ── Toggles ────────────────────────────────────────────────────────────────
 
-function SvgPixelToggle({ on, color }: { on: boolean; color: string }) {
+function SvgPixelToggle({ on, color, theme }: { on: boolean; color: string; theme?: Theme }) {
+  const c = roles(theme);
   const shadow = on ? 3 : 2;
   return (
     <svg width={88 + 3} height={44 + 3} viewBox="0 0 91 47" shapeRendering="crispEdges">
       <FontDefs />
-      <rect x={shadow} y={shadow} width={88} height={44} fill={on ? "#0a0e1a" : "#111111"} />
-      <rect width={88} height={44} fill={on ? "#0a0e1a" : "#1a2340"} />
-      <rect x={3} y={3} width={82} height={38} fill={on ? color : "#2a3a5c"} />
-      <rect x={3 + (on ? 55 : 4)} y={3 + 8} width={22} height={22} fill={on ? "#0a0e1a" : "#6b8ba4"} />
-      <text x={on ? 11 : 77} y={mid(22, 14)} textAnchor={on ? "start" : "end"} fontFamily={MONO} fontSize={14} fill={on ? "#0a0e1a" : "#e8f4f8"}>{on ? "ON" : "OFF"}</text>
+      <rect x={shadow} y={shadow} width={88} height={44} fill={on ? c.outline : c.light ? LIGHT.shadow : "#111111"} />
+      <rect width={88} height={44} fill={on ? c.outline : c.surface("#1a2340")} />
+      <rect x={3} y={3} width={82} height={38} fill={on ? color : c.surface("#2a3a5c")} />
+      <rect x={3 + (on ? 55 : 4)} y={3 + 8} width={22} height={22} fill={on ? c.onFill : c.text("#6b8ba4")} />
+      <text x={on ? 11 : 77} y={mid(22, 14)} textAnchor={on ? "start" : "end"} fontFamily={MONO} fontSize={14} fill={on ? c.onFill : c.text("#e8f4f8")}>{on ? "ON" : "OFF"}</text>
     </svg>
   );
 }
 
-function SvgToggleSwitch({ on, color }: { on: boolean; color: string }) {
+function SvgToggleSwitch({ on, color, theme }: { on: boolean; color: string; theme?: Theme }) {
+  const c = roles(theme);
   return (
     <svg width={47} height={27} viewBox="0 0 47 27" shapeRendering="crispEdges">
-      <rect x={3} y={3} width={44} height={24} fill="#0a0e1a" />
-      <rect width={44} height={24} fill="#0a0e1a" />
-      <rect x={3} y={3} width={38} height={18} fill={on ? color : "#2a3a5c"} />
-      <rect x={3 + (on ? 18 : 2)} y={3 + 2} width={16} height={14} fill={on ? "#0a0e1a" : "#6b8ba4"} />
+      <rect x={3} y={3} width={44} height={24} fill={c.outline} />
+      <rect width={44} height={24} fill={c.outline} />
+      <rect x={3} y={3} width={38} height={18} fill={on ? color : c.surface("#2a3a5c")} />
+      <rect x={3 + (on ? 18 : 2)} y={3 + 2} width={16} height={14} fill={on ? c.onFill : c.text("#6b8ba4")} />
     </svg>
   );
 }
 
 // ── XP bar / radio / tabs / header ─────────────────────────────────────────
 
-function SvgXPBar({ width, current, max, color }: { width: number; current: number; max: number; color: string }) {
+function SvgXPBar({ width, current, max, color, theme }: { width: number; current: number; max: number; color: string; theme?: Theme }) {
+  const c = roles(theme);
   const inner = width - 6;
   const pct = Math.min(Math.max(current / Math.max(max, 1), 0), 1);
   return (
     <svg width={width} height={16} viewBox={`0 0 ${width} 16`} shapeRendering="crispEdges">
-      <rect width={width} height={16} fill="#2a3a5c" />
-      <rect x={3} y={3} width={inner} height={10} fill="#0a0e1a" />
+      <rect width={width} height={16} fill={c.line("#2a3a5c")} />
+      <rect x={3} y={3} width={inner} height={10} fill={c.surface("#0a0e1a")} />
+      {pct > 0 && c.light && <rect x={1} y={1} width={Math.min(width - 2, Math.round(inner * pct * 100) / 100 + 4)} height={14} fill={c.outline} />}
       {pct > 0 && <rect x={3} y={3} width={Math.round(inner * pct * 100) / 100} height={10} fill={color} />}
     </svg>
   );
 }
 
-function SvgPixelRadio({ options, selected, color }: { options: string; selected: number; color: string }) {
+function SvgPixelRadio({ options, selected, color, theme }: { options: string; selected: number; color: string; theme?: Theme }) {
+  const c = roles(theme);
   const items = csv(options);
   const rowH = 21;
   const width = Math.ceil(14 + 8 + Math.max(0, ...items.map((o) => textWidth(o, MONO, 14))));
@@ -130,10 +156,10 @@ function SvgPixelRadio({ options, selected, color }: { options: string; selected
         const by = y + (rowH - 14) / 2;
         return (
           <g key={i}>
-            <rect x={0} y={by} width={14} height={14} fill={on ? color : "#2a3a5c"} />
-            <rect x={3} y={by + 3} width={8} height={8} fill={on ? color : "#0a0e1a"} />
-            {on && <rect x={4} y={by + 4} width={6} height={6} fill="#0a0e1a" />}
-            <text x={22} y={mid(y + rowH / 2, 14)} fontFamily={MONO} fontSize={14} fill={on ? color : "#6b8ba4"}>{opt}</text>
+            <rect x={0} y={by} width={14} height={14} fill={on ? c.line(color) : c.line("#2a3a5c")} />
+            <rect x={3} y={by + 3} width={8} height={8} fill={on ? color : c.surface("#0a0e1a")} />
+            {on && <rect x={4} y={by + 4} width={6} height={6} fill={c.onFill} />}
+            <text x={22} y={mid(y + rowH / 2, 14)} fontFamily={MONO} fontSize={14} fill={on ? c.text(color) : c.text("#6b8ba4")}>{opt}</text>
           </g>
         );
       })}
@@ -141,7 +167,8 @@ function SvgPixelRadio({ options, selected, color }: { options: string; selected
   );
 }
 
-function SvgTabBar({ labels, active, accent, width }: { labels: string; active: number; accent: string; width: number }) {
+function SvgTabBar({ labels, active, accent, width, theme }: { labels: string; active: number; accent: string; width: number; theme?: Theme }) {
+  const c = roles(theme);
   const items = csv(labels);
   const n = Math.max(items.length, 1);
   const h = 3 + 10 + 17 + 10 + 4 + 3;
@@ -150,17 +177,17 @@ function SvgTabBar({ labels, active, accent, width }: { labels: string; active: 
   return (
     <svg width={width} height={h} viewBox={`0 0 ${width} ${h}`} shapeRendering="crispEdges">
       <FontDefs />
-      <rect width={width} height={h} fill="#2a3a5c" />
-      <rect x={3} y={3} width={innerW} height={h - 6} fill="#0a0e1a" />
+      <rect width={width} height={h} fill={c.line("#2a3a5c")} />
+      <rect x={3} y={3} width={innerW} height={h - 6} fill={c.surface("#0a0e1a")} />
       {items.map((label, i) => {
         const x = 3 + i * cell;
         const on = i === active;
         return (
           <g key={i}>
-            {on && <rect x={x} y={3} width={cell} height={h - 6} fill="#1a2340" />}
-            {on && <rect x={x} y={h - 3 - 4} width={cell} height={4} fill={accent} />}
-            {i < items.length - 1 && <rect x={x + cell - 2} y={3} width={2} height={h - 6} fill="#2a3a5c" />}
-            <text x={x + cell / 2} y={mid(3 + 10 + 8.5, 14)} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={on ? "#ffffff" : "#7f93a8"}>{label}</text>
+            {on && <rect x={x} y={3} width={cell} height={h - 6} fill={c.surface("#1a2340")} />}
+            {on && <rect x={x} y={h - 3 - 4} width={cell} height={4} fill={c.line(accent)} />}
+            {i < items.length - 1 && <rect x={x + cell - 2} y={3} width={2} height={h - 6} fill={c.line("#2a3a5c")} />}
+            <text x={x + cell / 2} y={mid(3 + 10 + 8.5, 14)} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={on ? c.text("#ffffff") : c.text("#7f93a8")}>{label}</text>
           </g>
         );
       })}
@@ -168,32 +195,39 @@ function SvgTabBar({ labels, active, accent, width }: { labels: string; active: 
   );
 }
 
-function SvgSubPageHeader({ width, title, titleColor, showBack }: { width: number; title: string; titleColor: string; showBack: boolean }) {
+function SvgSubPageHeader({ width, title, titleColor, showBack, theme }: { width: number; title: string; titleColor: string; showBack: boolean; theme?: Theme }) {
+  const c = roles(theme);
   const h = 56;
   const titleX = showBack ? 16 + 4 + textWidth("< BACK", MONO, 14) + 4 + 12 : 16;
   return (
     <svg width={width} height={h} viewBox={`0 0 ${width} ${h}`} shapeRendering="crispEdges">
       <FontDefs />
-      <rect width={width} height={h} fill="#0a0e1a" />
-      <rect y={h - 4} width={width} height={4} fill="#2a3a5c" />
-      {showBack && <text x={20} y={mid(26, 14)} fontFamily={MONO} fontSize={14} fill="#9bb0c8">{"< BACK"}</text>}
-      <text x={titleX} y={mid(26, 14)} fontFamily={PIXEL} fontSize={14} fill={titleColor}>{title}</text>
+      <rect width={width} height={h} fill={c.surface("#0a0e1a")} />
+      <rect y={h - 4} width={width} height={4} fill={c.line("#2a3a5c")} />
+      {showBack && <text x={20} y={mid(26, 14)} fontFamily={MONO} fontSize={14} fill={c.text("#9bb0c8")}>{"< BACK"}</text>}
+      <text x={titleX} y={mid(26, 14)} fontFamily={PIXEL} fontSize={14} fill={c.text(titleColor)}>{title}</text>
     </svg>
   );
 }
 
 const TITLE_DOTS = ["#ff6b35", "#ffe66d", "#00ff88", "#4ecdc4", "#ff2d55"];
 
-function SvgColorDots({ size, gap }: { size: number; gap: number }) {
-  const w = TITLE_DOTS.length * size + (TITLE_DOTS.length - 1) * gap;
+function SvgColorDots({ size, gap, theme }: { size: number; gap: number; theme?: Theme }) {
+  const r = roles(theme);
+  const e = r.light ? 2 : 0;
+  const step = size + gap + e * 2;
+  const w = TITLE_DOTS.length * (size + e * 2) + (TITLE_DOTS.length - 1) * gap;
+  const h = size + e * 2;
   return (
-    <svg width={w} height={size} viewBox={`0 0 ${w} ${size}`} shapeRendering="crispEdges">
-      {TITLE_DOTS.map((c, i) => <rect key={c} x={i * (size + gap)} width={size} height={size} fill={c} />)}
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} shapeRendering="crispEdges">
+      {e > 0 && TITLE_DOTS.map((c, i) => <rect key={`edge-${c}`} x={i * step} width={size + e * 2} height={h} fill={r.outline} />)}
+      {TITLE_DOTS.map((c, i) => <rect key={c} x={i * step + e} y={e} width={size} height={size} fill={c} />)}
     </svg>
   );
 }
 
-function SvgSafetyBadge({ safe, size }: { safe: boolean; size: number }) {
+function SvgSafetyBadge({ safe, size, theme }: { safe: boolean; size: number; theme?: Theme }) {
+  const c = roles(theme);
   const color = safe ? "#00ff88" : "#ff2d55";
   const label = safe ? "SAFE" : "SCAMMED";
   const font = Math.max(8, Math.round(size * 0.5));
@@ -208,11 +242,17 @@ function SvgSafetyBadge({ safe, size }: { safe: boolean; size: number }) {
         <filter id="badge-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feDropShadow dx={0} dy={0} stdDeviation={4} floodColor={color} floodOpacity={0.8} />
         </filter>
+        <filter id="badge-edge" x="-20%" y="-20%" width="140%" height="140%">
+          <feMorphology in="SourceAlpha" operator="dilate" radius={1} result="d" />
+          <feFlood floodColor={c.outline} />
+          <feComposite in2="d" operator="in" result="o" />
+          <feMerge><feMergeNode in="o" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
       </defs>
-      <g transform={`translate(${(w - size) / 2} 8)`} filter="url(#badge-glow)">
+      <g transform={`translate(${(w - size) / 2} 8)`} filter={c.light ? "url(#badge-edge)" : "url(#badge-glow)"}>
         <IconShield size={size} color={color} />
       </g>
-      <text x={w / 2} y={8 + iconH + 3 + font * 0.85} textAnchor="middle" fontFamily={MONO} fontSize={font} letterSpacing={0.5} fill={color}>{label}</text>
+      <text x={w / 2} y={8 + iconH + 3 + font * 0.85} textAnchor="middle" fontFamily={MONO} fontSize={font} letterSpacing={0.5} fill={c.text(color)}>{label}</text>
     </svg>
   );
 }
@@ -221,7 +261,7 @@ function SvgSafetyBadge({ safe, size }: { safe: boolean; size: number }) {
 
 const chips = (pairs: Array<[string, string]>): ChoiceOption[] => pairs.map(([value, label]) => ({ value, label }));
 
-export const UI_ASSETS: AssetDef[] = [
+const UI_LIST: AssetDef[] = [
   asset({
     id: "ui-pixel-button",
     name: "Pixel Button",
@@ -305,7 +345,7 @@ export const UI_ASSETS: AssetDef[] = [
     group: "CONTROLS",
     defaults: { on: true, color: "#00ff88" },
     controls: [{ kind: "toggle", key: "on", label: "ON" }, { kind: "color", key: "color", label: "ON COLOUR" }],
-    render: (p) => <SvgPixelToggle on={p.on} color={p.color} />,
+    render: (p) => <SvgPixelToggle on={p.on} color={p.color} theme={(p as { theme?: Theme }).theme} />,
     filename: (p) => slug("toggle", p.on ? "on" : "off"),
   }),
   asset({
@@ -314,7 +354,7 @@ export const UI_ASSETS: AssetDef[] = [
     group: "CONTROLS",
     defaults: { on: true, color: "#00ff88" },
     controls: [{ kind: "toggle", key: "on", label: "ON" }, { kind: "color", key: "color", label: "ON COLOUR" }],
-    render: (p) => <SvgToggleSwitch on={p.on} color={p.color} />,
+    render: (p) => <SvgToggleSwitch on={p.on} color={p.color} theme={(p as { theme?: Theme }).theme} />,
     filename: (p) => slug("switch", p.on ? "on" : "off"),
   }),
   asset({
@@ -327,7 +367,7 @@ export const UI_ASSETS: AssetDef[] = [
       { kind: "number", key: "selected", label: "SELECTED (0 = FIRST)", min: -1, max: 20 },
       { kind: "color", key: "color", label: "SELECTED COLOUR" },
     ],
-    render: (p) => <SvgPixelRadio options={p.options} selected={p.selected} color={p.color} />,
+    render: (p) => <SvgPixelRadio options={p.options} selected={p.selected} color={p.color} theme={(p as { theme?: Theme }).theme} />,
     filename: (p) => slug("radio", csv(p.options)[p.selected] ?? "none"),
   }),
   asset({
@@ -350,7 +390,7 @@ export const UI_ASSETS: AssetDef[] = [
     group: "PROGRESS",
     defaults: { safe: true, size: 20 },
     controls: [{ kind: "size", key: "size", label: "SHIELD SIZE", min: 8, max: 256 }, { kind: "toggle", key: "safe", label: "SAFE" }],
-    render: (p) => <SvgSafetyBadge safe={p.safe} size={p.size} />,
+    render: (p) => <SvgSafetyBadge safe={p.safe} size={p.size} theme={(p as { theme?: Theme }).theme} />,
     filename: (p) => slug("safety-badge", p.safe ? "safe" : "scammed"),
     // Keeps the shield's glow, which reaches past the shape.
     canvas: "original",
@@ -361,8 +401,11 @@ export const UI_ASSETS: AssetDef[] = [
     group: "DECOR",
     defaults: { size: 8, gap: 8 },
     controls: [{ kind: "size", key: "size", label: "DOT SIZE", min: 2, max: 128 }, { kind: "number", key: "gap", label: "GAP", min: 0, max: 128 }],
-    render: (p) => <SvgColorDots size={p.size} gap={p.gap} />,
+    render: (p) => <SvgColorDots size={p.size} gap={p.gap} theme={(p as { theme?: Theme }).theme} />,
     filename: (p) => slug("color-dots", p.size),
     note: "The five-colour strip under the title screen logo.",
   }),
 ];
+
+// Every widget above takes `theme` and draws the app's light colours in the light theme.
+export const UI_ASSETS: AssetDef[] = UI_LIST.map((a): AssetDef => ({ ...a, light: "props" }));

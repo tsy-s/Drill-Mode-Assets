@@ -1,4 +1,4 @@
-import { IconFamily, IconGear, IconHouse, IconPerson, IconPhone, IconStar } from "./vendor/icons";
+import { IconEyeInspect, IconFamily, IconGear, IconHouse, IconPerson, IconPhone, IconStar } from "./vendor/icons";
 import { AVATAR_SUBTABS } from "./assets/avatar";
 import { CHARACTER_ASSETS } from "./assets/characters";
 import { FURNITURE_ASSETS } from "./assets/furniture";
@@ -17,3 +17,15 @@ export const TABS: TabDef[] = [
 ];
 
 export const ALL_ASSETS: AssetDef[] = TABS.flatMap((t) => t.assets ?? t.subTabs?.flatMap((s) => s.assets) ?? []);
+
+/** The light-theme review board: every icon's outline options side by side, with notes. */
+export const REVIEW_TAB: TabDef = { id: "review", label: "REVIEW", accent: "#00d4ff", Icon: IconEyeInspect };
+
+/** Where an asset lives, for jumping from the review board to its tab. */
+export function locate(id: string): { tab: TabDef; listKey: string; subTabId?: string } | null {
+  for (const tab of TABS) {
+    if (tab.assets?.some((a) => a.id === id)) return { tab, listKey: tab.id };
+    for (const sub of tab.subTabs ?? []) if (sub.assets.some((a) => a.id === id)) return { tab, listKey: `${tab.id}/${sub.id}`, subTabId: sub.id };
+  }
+  return null;
+}

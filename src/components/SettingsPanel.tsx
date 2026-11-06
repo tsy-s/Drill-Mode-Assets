@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { IconCheck, IconDownload } from "../vendor/icons";
 import { PixelButton } from "../vendor/ui/PixelButton";
 import { APP_COLORS, ColorInput, ControlView } from "./Controls";
-import { Chip, Field, NumberInput, Section, Swatch } from "./kit";
+import { Chip, Field, NumberInput, Section, Slider, Swatch } from "./kit";
 import { downloadSvg, svgFile, type ProcessedSvg } from "../lib/svg";
 import type { AssetDef, CanvasMode, CanvasOptions, Props } from "../lib/types";
+import { DEFAULT_INNER, INNER_MODES, iconInfo, textColor, useTheme } from "../lib/theme";
+import type { ReviewEntry } from "../lib/review";
 
-export function SettingsPanel({ def, values, set, reset, accent, svg, palette, setPalette, canvas, setCanvas, filename }: {
+export function SettingsPanel({ def, values, set, reset, accent, svg, palette, setPalette, canvas, setCanvas, filename, review, setReview, thinPx, setThinPx }: {
   def: AssetDef;
   values: Props;
   set: (patch: Props) => void;
@@ -18,14 +20,19 @@ export function SettingsPanel({ def, values, set, reset, accent, svg, palette, s
   canvas: CanvasOptions;
   setCanvas: (next: CanvasOptions) => void;
   filename: string;
+  review: ReviewEntry;
+  setReview: (patch: ReviewEntry) => void;
+  thinPx: number;
+  setThinPx: (v: number) => void;
 }) {
+  const theme = useTheme();
   const Custom = def.Settings;
   const controls = def.controls.filter((c) => c.visible?.(values) ?? true);
   return (
     <aside className="settings" aria-label="Settings">
       <div className="settings-head">
         <div>
-          <div className="settings-kicker" style={{ color: accent }}>SETTINGS</div>
+          <div className="settings-kicker" style={{ color: textColor(theme, accent) }}>SETTINGS</div>
           <h2 className="settings-title">{def.name.toUpperCase()}</h2>
         </div>
         <button type="button" className="mini-btn" onClick={reset} title="Reset this asset's settings, palette, canvas and file name">RESET</button>
@@ -43,11 +50,69 @@ export function SettingsPanel({ def, values, set, reset, accent, svg, palette, s
 
         {Custom && <Custom values={values} set={set} accent={accent} />}
 
+        <LightSection def={def} values={values} svg={svg} review={review} setReview={setReview} thinPx={thinPx} setThinPx={setThinPx} accent={accent} />
+
+        <Section title="REVIEW NOTE" accent={accent} note="A comment on this asset for the group. Every note is listed on the REVIEW tab and in its copied review.">
+          <textarea
+            className="text-input"
+            rows={3}
+            placeholder="e.g. keep the inner outline here, the details read better"
+            value={review.note ?? ""}
+            onChange={(e) => setReview({ note: e.target.value })}
+            aria-label={`Review note on ${def.name}`}
+          />
+        </Section>
+
         <PaletteSection colors={svg.colors} palette={palette} setPalette={setPalette} accent={accent} />
 
         <ExportSection svg={svg} filename={filename} canvas={canvas} setCanvas={setCanvas} defaultMode={def.canvas ?? "trim"} accent={accent} />
       </div>
     </aside>
+  );
+}
+
+/** What the light theme does to this asset, and (icons with holes) the inner-line choice. */
+function LightSection({ def, values, svg, review, setReview, thinPx, setThinPx, accent }: {
+  def: AssetDef; values: Props; svg: ProcessedSvg; review: ReviewEntry; setReview: (p: ReviewEntry) => void;
+  thinPx: number; setThinPx: (v: number) => void; accent: string;
+}) {
+  const theme = useTheme();
+  if (theme !== "light") return null;
+  if (def.light === "props") {
+    return <div className="settings-flag">LIGHT THEME · drawn with the app's light colours: light surfaces, neon fills with navy text, darker inks for neon text, dark outlines.</div>;
+  }
+  if (def.light !== "icon") {
+    return <div className="settings-flag">LIGHT THEME · looks the same in both themes. In the app, characters, furniture and the room scenes keep their colours, and the title and call screens stay dark.</div>;
+  }
+  const info = iconInfo(svg.markup, values.color, !!def.edge);
+  const current = review.inner ?? DEFAULT_INNER;
+  return (
+    <Section
+      title="LIGHT THEME OUTLINE"
+      accent={accent}
+      note={!info.outlined
+        ? "Drawn in a neutral colour, so the app gives it no outline (like grey nav icons). Pick a neon colour above to see the outline."
+        : "Neon with a 1px dark outline, as in the app. The canvas grows by 1px on each side for it."}
+    >
+      {info.outlined && info.holes > 0 ? (
+        <div className="controls">
+          <Field label="INNER LINES" hint={INNER_MODES.find((m) => m.id === current)?.hint}>
+            <div className="choice-grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+              {INNER_MODES.map((m) => (
+                <Chip key={m.id} selected={current === m.id} accent={accent} onClick={() => setReview({ inner: m.id })} title={m.hint}>{m.label}</Chip>
+              ))}
+            </div>
+          </Field>
+          {current === "thin" && (
+            <Field label={`THIN LINE WIDTH · ${thinPx}PX`} hint="One width for every icon. The outer outline is 1px.">
+              <Slider label="Thin inner line width" value={thinPx} min={0.25} max={1} step={0.05} onChange={setThinPx} accent={accent} />
+            </Field>
+          )}
+        </div>
+      ) : (
+        <div className="section-note">{info.outlined ? "No holes inside, so there are no inner lines to choose." : ""}</div>
+      )}
+    </Section>
   );
 }
 
@@ -91,7 +156,7 @@ function PaletteSection({ colors, palette, setPalette, accent }: {
                   <span className="palette-chip" style={{ background: now, boxShadow: on ? `0 0 0 3px ${accent}` : edited ? `0 0 0 2px ${accent}88` : undefined }}>
                     {edited && <span className="palette-was" style={{ background: c }} />}
                   </span>
-                  <span className="palette-hex" style={on ? { color: "#ffffff" } : undefined}>{now.replace("#", "")}</span>
+                  <span className="palette-hex" style={on ? { color: "var(--strong)" } : undefined}>{now.replace("#", "")}</span>
                 </button>
               );
             })}
@@ -205,7 +270,7 @@ function ExportSection({ svg, filename, canvas, setCanvas, defaultMode, accent }
                       aria-pressed={on}
                       aria-label={`Anchor ${["left", "centre", "right"][x * 2]} ${["top", "middle", "bottom"][y * 2]}`}
                       onClick={() => setCanvas({ ...canvas, anchor: [x, y] })}
-                      style={on ? { background: accent, borderColor: "#0a0e1a" } : undefined}
+                      style={on ? { background: accent, borderColor: "var(--outline)" } : undefined}
                     />
                   );
                 })}
@@ -220,7 +285,7 @@ function ExportSection({ svg, filename, canvas, setCanvas, defaultMode, accent }
         <PixelButton onClick={() => downloadSvg(svg.markup, name.trim() || "asset")} color="#00ff88" textColor="#0a0e1a" size="md" full disabled={!!svg.error}>
           <span className="btn-inner"><IconDownload size={18} color="#0a0e1a" /> EXPORT TO SVG</span>
         </PixelButton>
-        <PixelButton onClick={copy} color="#2a3a5c" textColor="#e8f4f8" size="sm" full disabled={!!svg.error}>
+        <PixelButton onClick={copy} color="var(--border)" textColor="var(--fg)" size="sm" full disabled={!!svg.error}>
           <span className="btn-inner">{copied ? <><IconCheck size={14} color="#00ff88" /> COPIED</> : "COPY SVG CODE"}</span>
         </PixelButton>
       </div>

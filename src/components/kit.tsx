@@ -1,15 +1,17 @@
 import type { CSSProperties, ReactNode } from "react";
 import { MONO } from "../lib/text";
+import { lineColor, textColor, useTheme } from "../lib/theme";
 
 // Small building blocks in the Drill Mode style (AvatarCustomisationScreen, PixelPanel).
 
 export function Section({ title, note, accent = "#c77dff", right, children }: {
   title: string; note?: ReactNode; accent?: string; right?: ReactNode; children: ReactNode;
 }) {
+  const theme = useTheme();
   return (
     <section className="section">
       <div className="section-head">
-        <div className="section-title" style={{ color: accent }}>{title}</div>
+        <div className="section-title" style={{ color: textColor(theme, accent) }}>{title}</div>
         {right}
       </div>
       {note && <div className="section-note">{note}</div>}
@@ -21,6 +23,7 @@ export function Section({ title, note, accent = "#c77dff", right, children }: {
 export function Choice({ selected, label, onClick, accent = "#c77dff", disabled, children, title }: {
   selected: boolean; label: string; onClick: () => void; accent?: string; disabled?: boolean; children?: ReactNode; title?: string;
 }) {
+  const line = lineColor(useTheme(), accent);
   return (
     <button
       type="button"
@@ -31,10 +34,10 @@ export function Choice({ selected, label, onClick, accent = "#c77dff", disabled,
       disabled={disabled}
       onClick={onClick}
       style={{
-        background: selected ? `${accent}22` : "#0a0e1a",
-        borderColor: selected ? accent : "#2a3a5c",
-        boxShadow: selected ? `2px 2px 0 ${accent}` : "none",
-        color: selected ? "#ffffff" : "#9bb0c8",
+        background: selected ? `${accent}22` : "var(--background)",
+        borderColor: selected ? line : "var(--border)",
+        boxShadow: selected ? `2px 2px 0 ${line}` : "none",
+        color: selected ? "var(--strong)" : "var(--soft)",
       }}
     >
       {children}
@@ -55,10 +58,10 @@ export function Chip({ selected, onClick, accent = "#00ff88", children, swatch, 
       title={title}
       onClick={onClick}
       style={{
-        background: selected ? accent : "#0a0e1a",
-        color: selected ? "#0a0e1a" : "#9bb0c8",
-        borderColor: selected ? "#0a0e1a" : "#2a3a5c",
-        boxShadow: selected ? "3px 3px 0 #0a0e1a" : "none",
+        background: selected ? accent : "var(--background)",
+        color: selected ? "#0a0e1a" : "var(--soft)",
+        borderColor: selected ? "var(--outline)" : "var(--border)",
+        boxShadow: selected ? "3px 3px 0 var(--outline)" : "none",
       }}
     >
       {swatch && <span className="chip-swatch" style={{ background: swatch }} />}
@@ -81,7 +84,7 @@ export function Swatch({ color, selected, onClick, label, accent = "#c77dff", st
       onClick={onClick}
       style={{
         background: color,
-        borderColor: selected ? "#ffffff" : "#0a0e1a",
+        borderColor: selected ? "var(--strong)" : "var(--outline)",
         outline: selected ? `2px solid ${accent}` : "none",
         ...style,
       }}
