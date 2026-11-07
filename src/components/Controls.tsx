@@ -173,8 +173,8 @@ export function ControlView({ control, values, defaults, set, accent }: {
             const custom = typeof value === "string" && !control.options.some((o) => o.value === value) && !!normalizeColor(value);
             const fallback = control.options.find((o) => o.value === value)?.swatch ?? "#000000";
             return (
-              <div className="custom-color" style={{ borderColor: custom ? accent : "#2a3a5c", opacity: disabled ? 0.35 : 1, pointerEvents: disabled ? "none" : undefined }}>
-                <span className="field-label" style={{ color: custom ? "#ffffff" : undefined }}>CUSTOM</span>
+              <div className="custom-color" style={{ borderColor: custom ? accent : "var(--border)", opacity: disabled ? 0.35 : 1, pointerEvents: disabled ? "none" : undefined }}>
+                <span className="field-label" style={{ color: custom ? "var(--strong)" : undefined }}>CUSTOM</span>
                 <ColorInput value={custom ? value : fallback} onChange={(hex) => set({ [control.key]: hex })} label={`${control.label} custom`} />
               </div>
             );

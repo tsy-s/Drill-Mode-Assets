@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { Slider } from "./kit";
 import type { ProcessedSvg } from "../lib/svg";
+import { textColor, useTheme } from "../lib/theme";
 
 type Backdrop = "dark" | "checker" | "light";
 const BACKDROPS: Array<{ id: Backdrop; label: string }> = [
@@ -20,7 +21,10 @@ const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
 export function Preview({ svg, accent, name }: { svg: ProcessedSvg; accent: string; name: string }) {
   const viewport = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<number | null>(null);
-  const [backdrop, setBackdrop] = useState<Backdrop>("dark");
+  const theme = useTheme();
+  // Starts on the theme's own page colour; the buttons still switch it.
+  const [backdrop, setBackdrop] = useState<Backdrop>(theme === "light" ? "light" : "dark");
+  useEffect(() => { setBackdrop(theme === "light" ? "light" : "dark"); }, [theme]);
 
   const fitZoom = () => {
     const el = viewport.current;
@@ -87,7 +91,7 @@ export function Preview({ svg, accent, name }: { svg: ProcessedSvg; accent: stri
       </div>
 
       <div className="preview-footer">
-        <span>OUTPUT <b style={{ color: accent }}>{fmt(svg.width)} × {fmt(svg.height)} px</b></span>
+        <span>OUTPUT <b style={{ color: textColor(theme, accent) }}>{fmt(svg.width)} × {fmt(svg.height)} px</b></span>
         <span>VIEW {Math.round(z * 100)}% · zoom never changes the export</span>
         <span>{svg.colors.length} COLOURS</span>
       </div>

@@ -77,6 +77,15 @@ export interface AssetDef {
   canvas?: "trim" | "original";
   filename?: (props: Props) => string;
   note?: string;
+  /**
+   * How the asset changes in the app's light theme (the header's DARK / LIGHT switch):
+   * "icon"  – neon with the dark outline, holes and inner lines (see lib/theme.ts)
+   * "props" – render() receives `theme` and picks its own light colours
+   * unset   – drawn the same in both themes (characters, furniture, always-dark screens)
+   */
+  light?: "icon" | "props";
+  /** Icons always outlined in light, whatever their colour (the medal: px-edge in the app). */
+  edge?: boolean;
 }
 
 export interface SubTab {

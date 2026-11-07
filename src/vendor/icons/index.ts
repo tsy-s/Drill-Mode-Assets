@@ -51,4 +51,6 @@ export { IconGlobe } from "./IconGlobe";
 export { IconInstagram } from "./IconInstagram";
 export { IconLinkedIn } from "./IconLinkedIn";
 export { IconMenu } from "./IconMenu";
+export { IconMoon } from "./IconMoon";
 export { IconPlay } from "./IconPlay";
+export { IconSun } from "./IconSun";
