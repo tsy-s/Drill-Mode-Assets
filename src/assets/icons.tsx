@@ -53,10 +53,15 @@ const SIMPLE_ICONS: Array<[name: string, Component: IconComponent, size: number,
 
 const sizeControl = { kind: "size", key: "size", min: 8, max: 512 } as const;
 
+// Grey icons the app outlines anyway: the header gear sits next to neon icons that all have one
+// (an experiment from the light-theme review; the review's OUTLINE choice compares both).
+const GREY_EDGE = new Set(["Gear"]);
+
 const simple: AssetDef[] = SIMPLE_ICONS.map(([name, Component, size, color]) =>
   asset({
     id: `icon-${slug(name)}`,
     name,
+    greyEdge: GREY_EDGE.has(name) || undefined,
     defaults: { size, color },
     controls: [sizeControl, { kind: "color", key: "color", label: "COLOUR" }],
     render: (p) => <Component size={p.size} color={p.color} />,

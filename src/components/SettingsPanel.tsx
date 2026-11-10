@@ -5,8 +5,8 @@ import { APP_COLORS, ColorInput, ControlView } from "./Controls";
 import { Chip, Field, NumberInput, Section, Slider, Swatch } from "./kit";
 import { downloadSvg, svgFile, type ProcessedSvg } from "../lib/svg";
 import type { AssetDef, CanvasMode, CanvasOptions, Props } from "../lib/types";
-import { DEFAULT_INNER, INNER_MODES, iconInfo, textColor, useTheme } from "../lib/theme";
-import type { ReviewEntry } from "../lib/review";
+import { INNER_MODES, iconInfo, textColor, useTheme } from "../lib/theme";
+import { iconDefaults, type ReviewEntry } from "../lib/review";
 
 export function SettingsPanel({ def, values, set, reset, accent, svg, palette, setPalette, canvas, setCanvas, filename, review, setReview, thinPx, setThinPx }: {
   def: AssetDef;
@@ -84,16 +84,29 @@ function LightSection({ def, values, svg, review, setReview, thinPx, setThinPx, 
   if (def.light !== "icon") {
     return <div className="settings-flag">LIGHT THEME · looks the same in both themes. In the app, characters, furniture and the room scenes keep their colours, and the title and call screens stay dark.</div>;
   }
-  const info = iconInfo(svg.markup, values.color, !!def.edge);
-  const current = review.inner ?? DEFAULT_INNER;
+  const base = iconDefaults(def);
+  const edge = review.edge ?? base.edge;
+  const info = iconInfo(svg.markup, values.color, !!def.edge || edge);
+  // Unpicked: what the icon's markup asks for at its current colour (the gear: thin in a colour).
+  const current = review.inner ?? info.inner;
   return (
     <Section
       title="LIGHT THEME OUTLINE"
       accent={accent}
       note={!info.outlined
-        ? "Drawn in a neutral colour, so the app gives it no outline (like grey nav icons). Pick a neon colour above to see the outline."
-        : "Neon with a 1px dark outline, as in the app. The canvas grows by 1px on each side for it."}
+        ? "Drawn in a neutral colour, so the app gives it no outline (like grey nav icons). Turn the outline on below, or pick a neon colour above."
+        : "A 1px dark outline, as in the app. The canvas grows by 1px on each side for it."}
     >
+      {info.neutral && !def.edge && (
+        <div className="controls" style={{ marginBottom: 12 }}>
+          <Field label="OUTLINE ON THIS GREY ICON" hint={base.edge ? "The app outlines it (e.g. the header gear, next to the neon icons)." : "The app leaves grey icons without an outline."}>
+            <div className="choice-grid" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+              <Chip selected={!edge} accent={accent} onClick={() => setReview({ edge: false })}>NO OUTLINE</Chip>
+              <Chip selected={edge} accent={accent} onClick={() => setReview({ edge: true })}>OUTLINE</Chip>
+            </div>
+          </Field>
+        </div>
+      )}
       {info.outlined && info.holes > 0 ? (
         <div className="controls">
           <Field label="INNER LINES" hint={INNER_MODES.find((m) => m.id === current)?.hint}>

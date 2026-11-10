@@ -433,6 +433,8 @@ button:disabled { cursor: not-allowed; }
 .review-name { display: flex; flex-direction: column; gap: 4px; justify-content: center; }
 .review-name .link-btn { text-align: left; font-size: 14px; }
 .review-facts { font-size: 10px; color: var(--muted); letter-spacing: .5px; line-height: 1.35; }
+.review-edge { margin-top: 6px; }
+.review-edge .chip { padding: 4px 6px; font-size: 10px; }
 .review-cell { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 64px; padding: 10px 8px 22px; border: 3px solid var(--border); }
 .review-cell.is-dark { background: #0a0e1a; border-color: #2a3a5c; }
 .review-cell.is-light { background: #e8edf4; }

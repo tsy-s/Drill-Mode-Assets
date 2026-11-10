@@ -4,9 +4,9 @@ import { lineColor, useTheme, type InnerMode } from "../lib/theme";
 import { renderForTheme, themedProps } from "../lib/themed";
 
 /** Searchable, grouped list of a tab's assets with live thumbnails. */
-export function AssetList({ assets, selectedId, onSelect, valuesOf, accent, innerOf, thinPx, reviewed }: {
+export function AssetList({ assets, selectedId, onSelect, valuesOf, accent, innerOf, edgeOf, thinPx, reviewed }: {
   assets: AssetDef[]; selectedId: string; onSelect: (id: string) => void; valuesOf: (def: AssetDef) => Props; accent: string;
-  innerOf: (id: string) => InnerMode; thinPx: number; reviewed: (id: string) => boolean;
+  innerOf: (id: string) => InnerMode | undefined; edgeOf: (id: string) => boolean; thinPx: number; reviewed: (id: string) => boolean;
 }) {
   const theme = useTheme();
   const [query, setQuery] = useState("");
@@ -25,7 +25,7 @@ export function AssetList({ assets, selectedId, onSelect, valuesOf, accent, inne
   // the preview shows (on their own canvas, which needs no measuring).
   const thumb = (a: AssetDef) => {
     if (theme === "light" && a.light === "icon") {
-      const out = renderForTheme(a, valuesOf(a), { theme, canvas: { mode: "original" }, inner: innerOf(a.id), thinPx });
+      const out = renderForTheme(a, valuesOf(a), { theme, canvas: { mode: "original" }, inner: innerOf(a.id), edge: edgeOf(a.id), thinPx });
       return <span className="asset-thumb-art" dangerouslySetInnerHTML={{ __html: out.markup }} />;
     }
     return a.render(themedProps(a, valuesOf(a), theme));

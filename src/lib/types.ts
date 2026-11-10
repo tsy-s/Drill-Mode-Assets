@@ -86,6 +86,9 @@ export interface AssetDef {
   light?: "icon" | "props";
   /** Icons always outlined in light, whatever their colour (the medal: px-edge in the app). */
   edge?: boolean;
+  /** A grey icon the app outlines in light anyway (the header gear, an experiment from the
+   *  review). The review's OUTLINE choice can turn it off or on for any grey icon. */
+  greyEdge?: boolean;
 }
 
 export interface SubTab {
