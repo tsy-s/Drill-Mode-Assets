@@ -2,6 +2,7 @@ export function IconGitHub({ size = 20, color = "#e8f4f8" }: { size?: number; co
   return (
     <svg width={size} height={size} viewBox="0 0 12 12" style={{ imageRendering: "pixelated", display: "block" }}>
       <path className="px-hole" fill="none" d="M3 5h2v2h-2zM7 5h2v2h-2zM3 9h1v1h-1z" />
+      <path className="px-hole-line" fill="none" d="M3 5H5V7H3ZM7 5H9V7H7ZM3 9H4V10H3Z" />
       <rect x={1} y={1} width={2} height={1} fill={color} />
       <rect x={9} y={1} width={2} height={1} fill={color} />
       <rect x={1} y={2} width={10} height={3} fill={color} />

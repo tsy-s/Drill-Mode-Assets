@@ -61,14 +61,23 @@ const shop: AssetDef[] = SHOP_ITEMS
   .sort((a, b) => CATEGORY_ORDER.indexOf(a[2]) - CATEGORY_ORDER.indexOf(b[2]))
   .map(([art, name, category]) => {
     const markup = SHOP_FILES[`../vendor/furniture/shop-svg/${art}.svg`] ?? "";
+    // The window pieces have a day-sky twin (<art>-day.svg) for day rooms in the app.
+    const dayMarkup = SHOP_FILES[`../vendor/furniture/shop-svg/${art}-day.svg`];
     return asset({
       id: `shop-${art}`,
       name,
       group: CATEGORY_NAMES[category],
-      defaults: { size: 56 },
-      controls: [{ kind: "size", key: "size", label: "WIDTH", min: 14, max: 1120, step: 1, hint: "Native art is 56 × 48 px" }],
-      render: (p) => <RawSvg markup={markup} width={p.size} />,
-      filename: (p) => slug(art, p.size !== 56 && p.size),
+      defaults: dayMarkup ? { size: 56, time: "night" } : { size: 56 },
+      controls: [
+        // Day rooms in the app show the day sky.
+        ...(dayMarkup ? [{
+          kind: "choice" as const, key: "time", label: "SKY", style: "chips" as const, columns: 2,
+          options: [{ value: "night", label: "NIGHT" }, { value: "day", label: "DAY" }],
+        }] : []),
+        { kind: "size" as const, key: "size", label: "WIDTH", min: 14, max: 1120, step: 1, hint: "Native art is 56 × 48 px" },
+      ],
+      render: (p) => <RawSvg markup={dayMarkup && p.time === "day" ? dayMarkup : markup} width={p.size} />,
+      filename: (p) => slug(art, dayMarkup && p.time === "day" && "day", p.size !== 56 && p.size),
     });
   });
 

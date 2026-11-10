@@ -1,13 +1,17 @@
 import { processSvg, renderAsset, type ProcessedSvg } from "./svg";
-import { DEFAULT_INNER, DEFAULT_THIN_PX, lightIcon, type InnerMode, type Theme } from "./theme";
+import { DEFAULT_THIN_PX, lightIcon, markupInner, type InnerMode, type Theme } from "./theme";
 import type { AssetDef, CanvasOptions, Props } from "./types";
 
 export type RenderOptions = {
   theme: Theme;
   palette?: Record<string, string>;
   canvas?: CanvasOptions;
+  /** The inner lines to draw. Unset: what the icon's own markup asks for at these props
+   *  (data-inner, so the gear is thin in a colour and outline-only when grey). */
   inner?: InnerMode;
   thinPx?: number;
+  /** Outline a grey icon too (the review's OUTLINE choice). */
+  edge?: boolean;
 };
 
 /** The props an asset renders with in a theme ("props" assets get `theme`). */
@@ -26,8 +30,8 @@ export function renderForTheme(def: AssetDef, values: Props, opts: RenderOptions
   if (opts.theme !== "light" || def.light !== "icon" || base.error) return base;
   const light = lightIcon(base.markup, {
     color: typeof values.color === "string" ? values.color : undefined,
-    edge: def.edge,
-    inner: opts.inner ?? DEFAULT_INNER,
+    edge: def.edge || opts.edge,
+    inner: opts.inner ?? markupInner(base.markup),
     thinPx: opts.thinPx ?? DEFAULT_THIN_PX,
   });
   return { ...base, ...light };

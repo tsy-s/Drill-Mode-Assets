@@ -69,15 +69,24 @@ export function surfaceColor(theme: Theme, c: string) {
 //   outer  – holes are paper, the outline runs only around the outside (the app today)
 //   thin   – like outer, plus a thinner dark line inside each hole
 //   full   – holes stay see-through and the outline traces them too (the app before)
+// Each icon's own markup says which one the app and site use: data-inner="thin" | "full" on its
+// <svg> (none = outer), picked in the light-theme review. That is the icon's default here.
 
 export type InnerMode = "outer" | "thin" | "full";
 export const INNER_MODES: Array<{ id: InnerMode; label: string; hint: string }> = [
-  { id: "outer", label: "OUTER ONLY", hint: "Holes are paper. The outline runs only around the outside. This is what the app and site do now." },
+  { id: "outer", label: "OUTER ONLY", hint: "Holes are paper. The outline runs only around the outside." },
   { id: "thin", label: "THIN INNER", hint: "Like outer only, plus a thinner dark line inside each hole." },
   { id: "full", label: "FULL", hint: "Holes stay see-through and get the full outline too (the look before the fix)." },
 ];
 export const DEFAULT_INNER: InnerMode = "outer";
-export const DEFAULT_THIN_PX = 0.5;
+/** The thin inner line picked in the review (the app and site draw 0.55px). */
+export const DEFAULT_THIN_PX = 0.55;
+
+/** The inner lines an icon's markup asks for: data-inner on its <svg>, as in the app and site. */
+export function markupInner(markup: string): InnerMode {
+  const m = markup.match(/<svg\b[^>]*\sdata-inner="(thin|full)"/);
+  return (m?.[1] as InnerMode | undefined) ?? "outer";
+}
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 type Box = [number, number, number, number];
@@ -114,13 +123,14 @@ function boxLayer(doc: Document, boxes: Box[], grow: number, fill: string, cls: 
 }
 const round = (n: number) => Math.round(n * 10000) / 10000;
 
-export type IconInfo = { holes: number; outlined: boolean };
+/** neutral: drawn in a grey or white, so only an edge (px-edge) outlines it. inner: its markup's choice. */
+export type IconInfo = { holes: number; outlined: boolean; neutral: boolean; inner: InnerMode };
 
 /** Hole cells and whether the icon gets the outline, for the review board. */
 export function iconInfo(markup: string, color: string | undefined, edge: boolean): IconInfo {
   const holes = boxesFromPath(markup.match(/class="px-hole"[^>]*\sd="([^"]*)"/)?.[1] ?? markup.match(/\sd="([^"]*)"[^>]*class="px-hole"/)?.[1] ?? null)
     .reduce((n, [, , w, h]) => n + w * h, 0);
-  return { holes, outlined: edge || isNeon(color) };
+  return { holes, outlined: edge || isNeon(color), neutral: !isNeon(color), inner: markupInner(markup) };
 }
 
 /**

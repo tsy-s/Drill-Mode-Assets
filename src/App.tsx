@@ -6,12 +6,12 @@ import { Preview } from "./components/Preview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { ReviewBoard } from "./components/ReviewBoard";
 import { ALL_ASSETS, REVIEW_TAB, TABS, locate } from "./registry";
-import { slug } from "./lib/svg";
+import { renderAsset, slug } from "./lib/svg";
 import { useFontsReady } from "./lib/text";
-import { DEFAULT_INNER, DEFAULT_THIN_PX, ThemeContext, lineColor, type InnerMode, type Theme } from "./lib/theme";
+import { DEFAULT_THIN_PX, ThemeContext, lineColor, markupInner, type InnerMode, type Theme } from "./lib/theme";
 import { renderForTheme } from "./lib/themed";
 import type { AssetDef, CanvasOptions, Props } from "./lib/types";
-import type { ReviewEntry } from "./lib/review";
+import { iconDefaults, type ReviewEntry } from "./lib/review";
 import { IconMoon, IconSun } from "./vendor/icons";
 
 const STORAGE_KEY = "drill-mode-svg-studio-v1";
@@ -77,7 +77,17 @@ export default function App() {
   const palette = state.palettes[def.id] ?? {};
   const canvas: CanvasOptions = state.canvases[def.id] ?? { mode: def.canvas ?? "trim" };
   const review = state.review[def.id] ?? {};
-  const innerOf = (id: string): InnerMode => state.review[id]?.inner ?? DEFAULT_INNER;
+  // An icon's inner lines and (grey icons) outline: the review's pick, else what the app draws.
+  // The inner-line default comes from the icon's markup at its current settings, so it can depend
+  // on the colour (the gear: thin in a colour, outline only when grey); renderForTheme reads it.
+  const defaultsOf = (id: string, values?: Props) => {
+    const a = ALL_ASSETS.find((x) => x.id === id);
+    if (!a) return { inner: "outer" as InnerMode, edge: false };
+    const base = iconDefaults(a);
+    return a.light === "icon" ? { ...base, inner: markupInner(renderAsset(a, values ?? valuesOf(a))) } : base;
+  };
+  const innerOf = (id: string): InnerMode | undefined => state.review[id]?.inner;
+  const edgeOf = (id: string): boolean => state.review[id]?.edge ?? defaultsOf(id).edge;
 
   const set = (patch: Props) =>
     setState((s) => ({ ...s, values: { ...s.values, [def.id]: { ...valuesOf(def), ...s.values[def.id], ...patch } } }));
@@ -94,16 +104,19 @@ export default function App() {
     setState((s) => {
       const next = { ...s.review[id], ...patch };
       if (!next.note?.trim()) delete next.note;
-      if (!next.inner || next.inner === DEFAULT_INNER) delete next.inner;
+      const a = ALL_ASSETS.find((x) => x.id === id);
+      const base = defaultsOf(id, a ? { ...a.defaults, ...s.values[id] } : undefined);
+      if (!next.inner || next.inner === base.inner) delete next.inner;
+      if (next.edge === undefined || next.edge === base.edge) delete next.edge;
       const { [id]: _old, ...rest } = s.review;
       return { ...s, review: Object.keys(next).length ? { ...rest, [id]: next } : rest };
     });
 
   const svg = useMemo(
-    () => renderForTheme(def, values, { theme, palette, canvas, inner: innerOf(def.id), thinPx: state.thinPx }),
+    () => renderForTheme(def, values, { theme, palette, canvas, inner: innerOf(def.id), edge: edgeOf(def.id), thinPx: state.thinPx }),
     // fontsVersion: text-based assets measure their labels with the loaded fonts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [def, JSON.stringify(values), JSON.stringify(palette), JSON.stringify(canvas), fontsVersion, theme, innerOf(def.id), state.thinPx],
+    [def, JSON.stringify(values), JSON.stringify(palette), JSON.stringify(canvas), fontsVersion, theme, innerOf(def.id), edgeOf(def.id), state.thinPx],
   );
 
   const baseName = def.filename?.(values) ?? slug(def.name);
@@ -208,6 +221,7 @@ export default function App() {
                   valuesOf={valuesOf}
                   accent={accent}
                   innerOf={innerOf}
+                  edgeOf={edgeOf}
                   thinPx={state.thinPx}
                   reviewed={(id) => !!state.review[id]}
                 />

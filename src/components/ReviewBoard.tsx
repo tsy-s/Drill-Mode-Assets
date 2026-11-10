@@ -1,9 +1,9 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { ICON_ASSETS } from "../assets/icons";
 import { ALL_ASSETS } from "../registry";
-import { DEFAULT_INNER, INNER_MODES, iconInfo, type InnerMode } from "../lib/theme";
+import { INNER_MODES, iconInfo, type InnerMode } from "../lib/theme";
 import { renderForTheme } from "../lib/themed";
-import { downloadText, reviewMarkdown, type ReviewEntry } from "../lib/review";
+import { downloadText, iconDefaults, reviewMarkdown, type ReviewEntry } from "../lib/review";
 import type { AssetDef, Props } from "../lib/types";
 import { Chip, Slider } from "./kit";
 
@@ -26,20 +26,24 @@ export function ReviewBoard({ valuesOf, review, setReview, thinPx, setThinPx, on
   const [filter, setFilter] = useState<Filter>("all");
   const [copied, setCopied] = useState(false);
 
-  // Recomputed when an icon's settings or the thin width change, not on every note keystroke.
-  const valuesKey = JSON.stringify(ICON_ASSETS.map(valuesOf));
+  // Recomputed when an icon's settings, its outline or the thin width change, not on every
+  // note keystroke.
+  const edgeOf = (def: AssetDef) => review[def.id]?.edge ?? iconDefaults(def).edge;
+  const valuesKey = JSON.stringify(ICON_ASSETS.map((d) => [valuesOf(d), edgeOf(d)]));
   const rows = useMemo(() => ICON_ASSETS.map((def) => {
     const values = valuesOf(def);
+    const edge = edgeOf(def);
     const original = { mode: "original" as const };
     const dark = renderForTheme(def, values, { theme: "dark", canvas: original });
-    const info = iconInfo(dark.markup, values.color, !!def.edge);
-    const variants = INNER_MODES.map((m) => ({ ...m, svg: renderForTheme(def, values, { theme: "light", canvas: original, inner: m.id, thinPx }) }));
-    return { def, dark, info, variants };
+    const info = iconInfo(dark.markup, values.color, !!def.edge || edge);
+    const variants = INNER_MODES.map((m) => ({ ...m, svg: renderForTheme(def, values, { theme: "light", canvas: original, inner: m.id, edge, thinPx }) }));
+    return { def, dark, info, edge, variants };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [valuesKey, thinPx]);
 
   const visible = rows.filter((r) => filter === "all" || (filter === "holes" ? r.info.holes > 0 && r.info.outlined : !!review[r.def.id]));
-  const picked = rows.filter((r) => review[r.def.id]?.inner && review[r.def.id]!.inner !== DEFAULT_INNER).length;
+  // Changes from what the app draws now (each icon's own default).
+  const picked = rows.filter((r) => review[r.def.id]?.inner !== undefined || review[r.def.id]?.edge !== undefined).length;
   const noted = Object.values(review).filter((r) => r.note?.trim()).length;
   const otherNotes = ALL_ASSETS.filter((a) => a.light !== "icon" && review[a.id]?.note?.trim());
 
@@ -62,9 +66,10 @@ export function ReviewBoard({ valuesOf, review, setReview, thinPx, setThinPx, on
           <div className="settings-kicker" style={{ color: "var(--title)" }}>LIGHT THEME REVIEW</div>
           <p className="review-intro">
             Every icon the way the app's light theme draws it: the neon with a dark outline. For icons with holes, pick how the
-            inside should look: <b>outer only</b> (holes are paper, today's look), <b>thin inner</b> (paper holes with a thinner
-            dark line inside) or <b>full</b> (see-through holes with the full outline, the look before). Click a picture to pick it,
-            and add a note. Choices are saved in this browser.
+            inside should look: <b>outer only</b> (holes are paper), <b>thin inner</b> (paper holes with a thinner dark line
+            inside) or <b>full</b> (see-through holes with the full outline). Each icon starts on what the app and site draw
+            now. Grey icons get no outline unless you turn it on. Click a picture to pick it, and add a note. Choices are saved
+            in this browser.
           </p>
         </div>
         <div className="review-controls">
@@ -100,9 +105,10 @@ export function ReviewBoard({ valuesOf, review, setReview, thinPx, setThinPx, on
           {INNER_MODES.map((m) => <span key={m.id} title={m.hint}>LIGHT · {m.label}</span>)}
           <span>NOTE</span>
         </div>
-        {visible.map(({ def, dark, info, variants }) => {
+        {visible.map(({ def, dark, info, edge, variants }) => {
           const entry = review[def.id] ?? {};
-          const current: InnerMode = entry.inner ?? DEFAULT_INNER;
+          // Unpicked: what the icon's markup asks for at its current colour.
+          const current: InnerMode = entry.inner ?? info.inner;
           const choosable = info.outlined && info.holes > 0;
           return (
             <div key={def.id} className="review-row">
@@ -111,6 +117,12 @@ export function ReviewBoard({ valuesOf, review, setReview, thinPx, setThinPx, on
                 <span className="review-facts">
                   {!info.outlined ? "NOT OUTLINED · drawn in a neutral, like the app's grey icons" : info.holes ? `${info.holes} HOLE CELLS` : "NO HOLES · one look"}
                 </span>
+                {info.neutral && !def.edge && (
+                  <span className="chip-row review-edge" role="group" aria-label={`Outline ${def.name} in light`}>
+                    <Chip selected={!edge} accent={ACCENT} onClick={() => setReview(def.id, { edge: false })}>NO OUTLINE</Chip>
+                    <Chip selected={edge} accent={ACCENT} onClick={() => setReview(def.id, { edge: true })}>OUTLINE</Chip>
+                  </span>
+                )}
               </div>
               <div className="review-cell is-dark" data-theme="dark">{art(dark, zoom)}{zoom > 1 && art(dark, 1)}</div>
               {choosable ? variants.map((v) => (

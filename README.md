@@ -43,25 +43,37 @@ it, and turns the studio itself light (the Mist palette from `huawei-2026/src/st
 Until you pick, it follows the device's setting.
 
 - **Icons** are drawn in the neon with a 1px dark outline, as in the app. Icons in a neutral colour
-  (the grey gear, lock and speaker) get no outline, like grey nav icons in the app. The medal is
-  always outlined. The canvas grows by 1px on each side so the outline isn't cut off, and exports
+  (the grey lock and speaker) get no outline, like grey nav icons in the app. The medal is always
+  outlined. The grey gear is outlined too: in the app header it sits next to neon icons that all
+  have one (an experiment from the review; see Review below). The canvas grows by 1px on each side so the outline isn't cut off, and exports
   are named `…-light`. The outline is drawn as shapes, so it scales with zoom and stays in the file.
 - **Inner lines.** Icons with holes inside (Instagram, LinkedIn, the envelope…) have three looks,
   picked per icon under **LIGHT THEME OUTLINE** in Settings:
-  - `OUTER ONLY`: the holes are paper and the outline runs only around the outside. This is what the
-    app and site do now.
+  - `OUTER ONLY`: the holes are paper and the outline runs only around the outside.
   - `THIN INNER`: like outer only, plus a thinner dark line inside each hole. The width (0.25–1px,
-    default 0.5px) is one setting for every icon.
-  - `FULL`: the holes stay see-through and get the full outline too (the look before the fix).
+    default 0.55px) is one setting for every icon.
+  - `FULL`: the holes stay see-through and get the full outline too.
+
+  Each icon starts on the look the app and site use, which is in the icon itself: `data-inner` on
+  its `<svg>` (`"thin"`, `"full"`, or none for outer only), from the review in
+  `notes/reviews/2026-11-10-drill-mode-light-review.md`. The gear's depends on its colour, as in the
+  app: thin in a neon colour, outer only when grey. Change its colour and it switches.
 - **UI widgets** use the app's light colours: light surfaces, neon fills with navy text, darker
   inks for neon text, the line shade for borders, dark outlines and shadows.
-- **Characters, furniture and screens** look the same in both themes, as in the app (the rooms,
-  title and call screens stay dark).
+- **Characters, furniture and screens** look the same in both themes, as in the app (the title and
+  call screens stay dark).
+- **Day rooms.** In the app a room can be a day room (Customise → Day or night, or Auto, which
+  follows the player's theme). **Room Backdrop**, **House Roof** and **Room Window** (Screens ›
+  Rooms) have a `LIGHTING` choice for the night or day version, and the three window pieces
+  (city window, curtained window, skylight) have a `SKY` choice. The day art is
+  `src/vendor/furniture/shop-svg/*-day.svg`, the same files as the app's `public/furniture/`.
 
 ### Review
 
 The **REVIEW** tab lists every icon in light with its inner-line looks side by side (and the dark
-version for reference). Click a picture to pick it and write a note next to it. Any other asset can
+version for reference). Each icon starts on what the app and site draw now. Click a picture to pick
+it and write a note next to it. Grey icons have a `NO OUTLINE` / `OUTLINE` choice under their name,
+to compare a grey icon with and without the outline (the gear starts with it). Any other asset can
 get a note from **REVIEW NOTE** in its Settings. `COPY REVIEW` copies everything as a Markdown table
 (`DOWNLOAD .MD` saves it), ready to paste into a chat or a doc. Choices and notes are kept in this
 browser.
@@ -90,9 +102,10 @@ These are small, optional props. Without them, each component renders exactly as
 - `PixelMascot` (Pixi): `separated` leaves a one-pixel gap between head and body and makes the canvas one row taller. It is on by default here. `outfitColors` sets custom body/accent colours for the "Custom" outfit.
 - `PixelAvatar` and `IconMedal`: `color` overrides the rank colour.
 - `CharacterAvatar`: `palettes` accepts custom skin/hair colours outside the presets.
-- Icons with enclosed holes have `<path className="px-hole" fill="none">` as their first child, and
-  the warning and skull have a `px-ink` path for their dark details, as in the app and site. They
-  draw nothing unless the light theme fills them.
+- Icons with enclosed holes have `<path className="px-hole" fill="none">` as their first child, a
+  `px-hole-line` path (the outline of the holes, for the thin inner line) and `data-inner` on the
+  `<svg>`, and the warning and skull have a `px-ink` path for their dark details, as in the app and
+  site. They draw nothing unless the light theme fills them.
 
 In the app, the **UI** widgets and **Screens** are HTML/CSS, so this tool redraws them as native SVG in `src/assets/ui.tsx` and `src/assets/screens.tsx`. They use the same sizes and colours as the app, and exports stay editable in Figma or Illustrator. Text stays as live SVG text in the app's fonts (Press Start 2P, VT323, Share Tech Mono), with a Google Fonts link inside the file.
 
